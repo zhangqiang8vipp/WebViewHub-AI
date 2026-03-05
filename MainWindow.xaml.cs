@@ -79,7 +79,7 @@ namespace WebViewHub
             // 计算新窗口的默认位置（默认排版）
             var (x, y) = CalculateDefaultPosition(_counter - 1);
             
-            var container = CreateWebViewContainer(profileId, "https://www.baidu.com", string.Empty, x, y, DefaultWidth, DefaultHeight);
+            var container = CreateWebViewContainer(profileId, "https://www.baidu.com", string.Empty, false, x, y, DefaultWidth, DefaultHeight, 1.0);
             AddWebViewToCanvas(container);
         }
 
@@ -104,15 +104,17 @@ namespace WebViewHub
             return (x, y);
         }
 
-        private WebViewContainer CreateWebViewContainer(string profileId, string url, string roleTag, double x, double y, double width, double height)
+        private WebViewContainer CreateWebViewContainer(string profileId, string url, string roleTag, bool isMobileMode, double x, double y, double width, double height, double zoomFactor = 1.0)
         {
             var container = new WebViewContainer
             {
                 ProfileID = profileId,
                 CurrentUrl = string.IsNullOrEmpty(url) ? "https://www.baidu.com" : url,
                 RoleTag = roleTag ?? string.Empty,
+                IsMobileModeContent = isMobileMode,
                 Width = width,
-                Height = height
+                Height = height,
+                ZoomFactor = zoomFactor
             };
 
             Canvas.SetLeft(container, x);
@@ -385,10 +387,12 @@ namespace WebViewHub
                 ProfileID = w.ProfileID,
                 Url = w.CurrentUrl,
                 RoleTag = w.RoleTag,
+                IsMobileMode = w.IsMobileModeContent,
                 X = Canvas.GetLeft(w),
                 Y = Canvas.GetTop(w),
                 Width = w.Width,
-                Height = w.Height
+                Height = w.Height,
+                ZoomFactor = w.WebView.GetZoomFactor() / (Math.Max(0.3, Math.Min(1.0, w.ActualWidth / 1000.0)))
             }).ToList();
 
             _layoutService.SaveLayout(layout);
@@ -404,7 +408,7 @@ namespace WebViewHub
 
             foreach (var item in layout)
             {
-                var container = CreateWebViewContainer(item.ProfileID, item.Url, item.RoleTag, item.X, item.Y, item.Width, item.Height);
+                var container = CreateWebViewContainer(item.ProfileID, item.Url, item.RoleTag, item.IsMobileMode, item.X, item.Y, item.Width, item.Height, item.ZoomFactor);
                 AddWebViewToCanvas(container);
             }
 
@@ -466,7 +470,7 @@ namespace WebViewHub
             var count = _webViews.Count;
             if (count == 0) return;
 
-            const double panelWidth = 340; // 调度台宽度 + 间距
+            const double panelWidth = 460; // 调度台宽度 (440) + 安全间距
             var totalW  = LayoutCanvas.ActualWidth;
             var totalH  = LayoutCanvas.ActualHeight;
             var m       = DefaultMargin;

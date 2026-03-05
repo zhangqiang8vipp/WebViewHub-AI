@@ -16,7 +16,22 @@ People have long suffered from endlessly switching tabs between various AI web p
 - **One-Click Central Broadcasting**: A centralized floating command panel. Type one prompt, and it will automatically type and send it to all AI windows on the screen simultaneously.
 - **Cross-Model Role Fetching (@Cascade)**: By using `@RoleName`, you can ask ChatGPT to generate an outline, and immediately fetch it into Kimi or Claude to flesh out the main text.
 - **Native Session Persistence**: Completely isolated WebView instances inherently cache cookies (password-free logins) and save UI layout sizing in real-time (via SQLite).
-- **Immersive Borderless UI**: Supports Glassmorphism effects, minimalist title bars, and mobile User-Agent (UA) view spoofing for a better space-saving layout.
+- **Immersive Borderless UI**: Supports Glassmorphism effects, minimalist title bars, and mobile User-Agent (UA) view spoofing.
+- **High-Fidelity Markdown Extraction**: Built-in Turndown engine for automatic restoration of tables, code blocks, and math formulas.
+- **Smart Zoom Persistence**: Remembers and restores individual window zoom factors across sessions.
+
+## 🆕 v1.1.0 Change Log
+
+- **[Major Upgrade] Extraction Engine**: Migrated to `TurndownService` for genuine HTML-to-Markdown conversion.
+  - Full support for paragraphs, complex tables, and fenced code blocks with language detection.
+  - Fixed extraction gaps in ChatGPT and Gemini's long conversations.
+- **[Interaction] Adaptive Input**:
+  - Automatically enables `Ctrl + Enter` sending for Gemini and Grok.
+- **[Visuals] UI Cleanup**:
+  - **Doubao**: Physically removed "Suggested Questions" and recommendation widgets.
+  - **Grok**: Filtered out status noise (e.g., "1.5s Fast") for cleaner results.
+- **[Persistence] Zoom memory**: Persistent storage for manual zoom factors; your preferred view scale is now kept across restarts.
+- **[Kernel] Security & Stability**: Bypassed TrustedHTML CSP restrictions, preventing crashes on high-security models.
 
 ## 🏗️ Technical Architecture
 

@@ -59,6 +59,8 @@ namespace WebViewHub.Controls
             }
         }
 
+        public event EventHandler? CoreWebView2InitializationCompleted;
+
         private void WebViewUnit_Unloaded(object sender, RoutedEventArgs e)
         {
             Cleanup();
@@ -96,6 +98,9 @@ namespace WebViewHub.Controls
 
                 await WebView2Control.EnsureCoreWebView2Async(_environment);
                 ConfigureWebView();
+
+                // 转发原生初始化成功事件给上层容器
+                CoreWebView2InitializationCompleted?.Invoke(this, EventArgs.Empty);
 
                 // 导航到当前的地址 (默认是百度，或者由配置文件加载恢复的 Url)
                 Navigate(_currentUrl);
@@ -176,6 +181,11 @@ namespace WebViewHub.Controls
             {
                 WebView2Control.ZoomFactor = zoomFactor;
             }
+        }
+
+        public double GetZoomFactor()
+        {
+            return WebView2Control.ZoomFactor;
         }
 
         #endregion
