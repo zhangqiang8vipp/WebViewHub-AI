@@ -24,12 +24,12 @@ WebViewHub 是一个基于 Windows Presentation Foundation (WPF) 和 WebView2 �
 <table align="center">
   <tr>
     <td align="center">
-      <img src="Assets/wechat_pay.jpg" width="200" /><br />
-      <b>WeChat Pay</b>
+      <img src="Assets/alipay.jpg" width="200" /><br />
+      <b>微信支付</b>
     </td>
     <td align="center">
-      <img src="Assets/alipay.jpg" width="200" /><br />
-      <b>Alipay</b>
+      <img src="Assets/wechat_pay.jpg" width="200" /><br />
+      <b>支付宝支付</b>
     </td>
   </tr>
 </table>
