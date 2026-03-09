@@ -24,12 +24,12 @@ Your support is the greatest motivation for me to continue updating and optimizi
 <table align="center">
   <tr>
     <td align="center">
-      <img src="Assets/wechat_pay.jpg" width="200" /><br />
-      <b>WeChat Pay</b>
-    </td>
-    <td align="center">
       <img src="Assets/alipay.jpg" width="200" /><br />
       <b>Alipay</b>
+    </td>
+    <td align="center">
+      <img src="Assets/wechat_pay.jpg" width="200" /><br />
+      <b>WeChat Pay</b>
     </td>
   </tr>
 </table>
@@ -99,21 +99,30 @@ Download and run the `WebViewHub_Install_v1.0.0.exe` installer. Follow the wizar
 ## 📂 Directory Structure
 
 ```text
-WebViewHub-AI/
-├── App.xaml / App.xaml.cs          # WPF application entry point and global events
-├── MainWindow.xaml / .cs           # Main window view, holding bottom-layer container logic
-├── Controls/                       # Custom compound UI Controls (UserControls)
-│   ├── CentralCommandPanel         # Floating central command broadcasting panel
-│   ├── WebViewContainer            # Container managing multiple WebView instances
-│   ├── WebViewUnit                 # Wrapping of a single WebView2-based AI window
-│   ├── AppleRoleDialog             # Role extraction / @ function dialog
-│   ├── AppleUrlDialog              # Add new URL / Custom AI sites dialog
-│   └── AppleMessageBox             # Unified custom alert/message dialogs
-├── Services/                       # Application business logic and services
-│   └── LayoutService.cs            # Handles layout positioning, SQLite data, and window states
-├── Styles/                         # Global styling resources and theming
-│   └── AppStyles.xaml              # UI aesthetics definition, color tokens
-└── WebViewHub.csproj               # .NET 8 WPF Project configuration file
+WebViewHub/
+├── App.xaml / App.xaml.cs              # Entry point & Global configurations
+├── MainWindow.xaml / .cs               # Main Window: Grid Canvas & Scheduling logic
+├── FloatingIslandWindow.xaml / .cs     # Floating Island: Independent Topmost window
+├── Controls/                           # Custom UserControls
+│   ├── CentralCommandPanel             # Central command console (@mention, @ALL)
+│   ├── WebViewContainer                # Magnetic grid layout & model state manager
+│   ├── WebViewUnit                     # WebView2 wrapper & Browser behavior handler
+│   ├── ClearCacheDialog                # Built-in one-click cache/cookie cleaner
+│   ├── AppleRoleDialog                 # Role fetch & @mention config dialog
+│   ├── AppleUrlDialog                  # Custom AI site/URL config dialog
+│   └── AppleMessageBox                 # Unified Apple-style message boxes
+├── Services/                           # Backend logic & Singleton services
+│   ├── AppLogger.cs                    # Structured logging system
+│   ├── AppDatabase.cs                  # SQLite service for all persistent data
+│   └── LayoutService.cs                # Serialization of layouts & window parameters
+├── Styles/                             # UI styles & Theme resources
+│   └── AppStyles.xaml                  # Glassmorphism & control aesthetics
+├── Assets/                             # Static resources
+│   ├── lucky_cat.png / praying.png     # Animation materials
+│   └── alipay.jpg / wechat_pay.jpg     # Donation QR codes
+├── extractor.js                        # Core: Multi-platform DOM extraction engine
+├── turndown.js                         # Core: HTML-to-Markdown reverse engine
+└── WebViewHub.csproj                   # .NET 8 WPF Project file
 ```
 
 ## 💬 Feedback & Communication
