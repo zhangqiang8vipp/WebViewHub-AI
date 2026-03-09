@@ -1,0 +1,12 @@
+﻿  姝ｅ湪纭畾瑕佽繕鍘熺殑椤圭洰鈥?
+  鎵€鏈夐」鐩潎鏄渶鏂扮殑锛屾棤娉曡繕鍘熴€?
+E:\ProjectMy\WebViewHub\FloatingIslandWindow.xaml(174,11): error MC3000: 鈥淭he 'Border' start tag on line 17 position 6 does not match the end tag of 'Grid'. Line 174, position 11.鈥漍ML 鏃犳晥銆?[E:\ProjectMy\WebViewHub\WebViewHub.csproj]
+
+鐢熸垚澶辫触銆?
+
+E:\ProjectMy\WebViewHub\FloatingIslandWindow.xaml(174,11): error MC3000: 鈥淭he 'Border' start tag on line 17 position 6 does not match the end tag of 'Grid'. Line 174, position 11.鈥漍ML 鏃犳晥銆?[E:\ProjectMy\WebViewHub\WebViewHub.csproj]
+    0 涓鍛?
+    1 涓敊璇?
+
+宸茬敤鏃堕棿 00:00:00.85
+

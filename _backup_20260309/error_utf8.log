@@ -1,0 +1,19 @@
+﻿  姝ｅ湪纭畾瑕佽繕鍘熺殑椤圭洰鈥?
+  鎵€鏈夐」鐩潎鏄渶鏂扮殑锛屾棤娉曡繕鍘熴€?
+E:\ProjectMy\WebViewHub\Controls\CentralCommandPanel.xaml.cs(47,16): warning CS8618: 鍦ㄩ€€鍑烘瀯閫犲嚱鏁版椂锛屼笉鍙负 null 鐨?灞炴€?"MainWindowReference" 蹇呴』鍖呭惈闈?null 鍊笺€傝鑰冭檻娣诲姞 "required" 淇グ绗︽垨灏嗚 灞炴€?澹版槑涓哄彲涓?null銆?[E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\MainWindow.xaml.cs(274,65): error CS0234: 鍛藉悕绌洪棿鈥淪ystem.Windows.Media.Animation鈥濅腑涓嶅瓨鍦ㄧ被鍨嬫垨鍛藉悕绌洪棿鍚嶁€淐ornerRadiusAnimation鈥?鏄惁缂哄皯绋嬪簭闆嗗紩鐢?) [E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\MainWindow.xaml.cs(313,65): error CS0234: 鍛藉悕绌洪棿鈥淪ystem.Windows.Media.Animation鈥濅腑涓嶅瓨鍦ㄧ被鍨嬫垨鍛藉悕绌洪棿鍚嶁€淐ornerRadiusAnimation鈥?鏄惁缂哄皯绋嬪簭闆嗗紩鐢?) [E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\MainWindow.xaml.cs(35,21): warning CS0414: 瀛楁鈥淢ainWindow._generatingCount鈥濆凡琚祴鍊硷紝浣嗕粠鏈娇鐢ㄨ繃瀹冪殑鍊?[E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\MainWindow.xaml.cs(36,22): warning CS0414: 瀛楁鈥淢ainWindow._isPrayingVisible鈥濆凡琚祴鍊硷紝浣嗕粠鏈娇鐢ㄨ繃瀹冪殑鍊?[E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+
+鐢熸垚澶辫触銆?
+
+E:\ProjectMy\WebViewHub\Controls\CentralCommandPanel.xaml.cs(47,16): warning CS8618: 鍦ㄩ€€鍑烘瀯閫犲嚱鏁版椂锛屼笉鍙负 null 鐨?灞炴€?"MainWindowReference" 蹇呴』鍖呭惈闈?null 鍊笺€傝鑰冭檻娣诲姞 "required" 淇グ绗︽垨灏嗚 灞炴€?澹版槑涓哄彲涓?null銆?[E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\MainWindow.xaml.cs(35,21): warning CS0414: 瀛楁鈥淢ainWindow._generatingCount鈥濆凡琚祴鍊硷紝浣嗕粠鏈娇鐢ㄨ繃瀹冪殑鍊?[E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\MainWindow.xaml.cs(36,22): warning CS0414: 瀛楁鈥淢ainWindow._isPrayingVisible鈥濆凡琚祴鍊硷紝浣嗕粠鏈娇鐢ㄨ繃瀹冪殑鍊?[E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\MainWindow.xaml.cs(274,65): error CS0234: 鍛藉悕绌洪棿鈥淪ystem.Windows.Media.Animation鈥濅腑涓嶅瓨鍦ㄧ被鍨嬫垨鍛藉悕绌洪棿鍚嶁€淐ornerRadiusAnimation鈥?鏄惁缂哄皯绋嬪簭闆嗗紩鐢?) [E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\MainWindow.xaml.cs(313,65): error CS0234: 鍛藉悕绌洪棿鈥淪ystem.Windows.Media.Animation鈥濅腑涓嶅瓨鍦ㄧ被鍨嬫垨鍛藉悕绌洪棿鍚嶁€淐ornerRadiusAnimation鈥?鏄惁缂哄皯绋嬪簭闆嗗紩鐢?) [E:\ProjectMy\WebViewHub\WebViewHub_4hrbvq2r_wpftmp.csproj]
+    3 涓鍛?
+    2 涓敊璇?
+
+宸茬敤鏃堕棿 00:00:01.29

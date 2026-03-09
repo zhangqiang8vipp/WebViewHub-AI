@@ -1,0 +1,2 @@
+wix.exe : verbose WIX9030: There will be '12' threads used to produce CAB files.
+wix.exe : verbose WIX9007: Updating file information.
