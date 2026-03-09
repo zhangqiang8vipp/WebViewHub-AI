@@ -10,10 +10,12 @@ namespace WebViewHub.Services
         public string ProfileID { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string RoleTag { get; set; } = string.Empty;
+        public bool IsMobileMode { get; set; } = false;
         public double X { get; set; }
         public double Y { get; set; }
         public double Width { get; set; }
         public double Height { get; set; }
+        public double ZoomFactor { get; set; } = 1.0;
     }
 
     public class LayoutService

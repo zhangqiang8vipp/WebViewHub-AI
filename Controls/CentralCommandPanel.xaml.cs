@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -9,6 +10,8 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using Markdig;
+using Microsoft.Web.WebView2.Core;
 
 namespace WebViewHub.Controls
 {
@@ -18,7 +21,7 @@ namespace WebViewHub.Controls
     public class ResponseItem
     {
         public string Role { get; set; } = string.Empty;
-        public string Content { get; set; } = string.Empty;
+        public string HtmlContent { get; set; } = string.Empty;
         public string Time { get; set; } = string.Empty;
     }
 
@@ -30,6 +33,12 @@ namespace WebViewHub.Controls
         // --- 回复展示集合 ---
         private readonly ObservableCollection<ResponseItem> _responses = new();
 
+        // --- 标签栏状态 ---
+        // key = role，如 "系统""/"ChatGPT、value = 收到的消息总数（显示大红点）
+        private readonly Dictionary<string, int> _badgeCounts = new();
+        private string _activeTab = "全部"; // 当前选中的标签
+        private bool _isSidebarExpanded = true;
+
         // --- 发送历史记录管理 ---
         private readonly List<string> _history = new();
         private int _historyIndex = -1;
@@ -38,34 +47,349 @@ namespace WebViewHub.Controls
         public CentralCommandPanel()
         {
             InitializeComponent();
-            ResponseBoard.ItemsSource = _responses;
+            RefreshRoleTabs(); // 初始化加载默认“全部”标签
+            InitializeWebViewAsync();
         }
 
-        private void AddResponse(string role, string content)
+        private async void InitializeWebViewAsync()
         {
-            // 如果同一角色已有卡片，更新内容而不是新增
+            try
+            {
+                var env = await CoreWebView2Environment.CreateAsync(null, System.IO.Path.Combine(System.IO.Path.GetTempPath(), "WebViewHub_CentralCMD"));
+                await ResponseBoardWebView.EnsureCoreWebView2Async(env);
+                
+                string htmlTemplate = @"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji'; color: #24292f; margin: 0; padding: 6px; background: #fdfdfd; overflow-y: auto; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .card { margin: 0 0 10px 0; border: 1px solid #e5e5e7; border-radius: 8px; background: #fff; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        details { display: block; }
+        summary { padding: 8px 12px; background: #f0f7ff; cursor: pointer; display: flex; align-items: center; font-size: 13px; font-weight: 600; color: #0284c7; outline: none; }
+        summary:hover { background: #e0f0ff; }
+        .time { margin-left: auto; color: #94a3b8; font-weight: normal; font-size: 11px; }
+        .content { padding: 15px; border-top: 1px solid #e5e5e7; font-size: 14px; line-height: 1.6; word-wrap: break-word; overflow-x: hidden; }
+        .content pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; }
+        .content code { background: rgba(175, 184, 193, 0.2); border-radius: 4px; padding: 0.2em 0.4em; font-family: inherit; font-size: 85%; }
+        .content pre code { background: transparent; padding: 0; }
+        .content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; display: block; overflow-x: auto; white-space: nowrap; }
+        .content table th { background-color: #f6f8fa; font-weight: 600; border: 1px solid #d0d7de; padding: 12px 18px; text-align: left; }
+        .content table td { border: 1px solid #d0d7de; padding: 10px 18px; line-height: 1.6; }
+        .content table tr:nth-child(2n) { background-color: #f6f8fa; }
+        .content img { max-width: 100%; box-sizing: content-box; }
+        .content blockquote { padding: 0 1em; color: #656d76; border-left: 0.25em solid #d0d7de; margin: 0; }
+        .content a { color: #0969da; text-decoration: none; }
+        .content a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div id='board'></div>
+    <script>
+        function renderCards(jsonString) {
+            try {
+                let html = '';
+                const cards = JSON.parse(jsonString);
+                for(const c of cards) {
+                    html += `<div class='card'>
+                        <details open>
+                            <summary>
+                                <span style='margin-right:6px'>●</span>
+                                ${c.role}
+                                <span class='time'>${c.time}</span>
+                            </summary>
+                            <div class='content markdown-body'>${c.htmlContent}</div>
+                        </details>
+                    </div>`;
+                }
+                const board = document.getElementById('board');
+                
+                // 判断是否在底部
+                const isScrolledToBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50;
+                board.innerHTML = html || '<div style=""text-align:center;color:#94a3b8;margin-top:20px;font-size:12px"">暂无回答记录</div>';
+                
+                if(isScrolledToBottom) {
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
+            } catch(e) { console.error(e); }
+        }
+    </script>
+</body>
+</html>";
+                ResponseBoardWebView.NavigateToString(htmlTemplate);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"WebUI核心初始化失败: {ex.Message}");
+            }
+        }
+
+        private async void AddResponse(string role, string content)
+        {
+            content = FixMarkdownTableFormat(content);
+            
+            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            string htmlContent = Markdown.ToHtml(content, pipeline);
+
             var existing = _responses.FirstOrDefault(r => r.Role == role);
             if (existing != null)
             {
-                existing.Content = content;
-                // 因为没有实现 INotifyPropertyChanged，直接替换整个 item
-                int idx = _responses.IndexOf(existing);
-                _responses[idx] = new ResponseItem { Role = role, Content = content, Time = DateTime.Now.ToString("HH:mm:ss") };
+                existing.HtmlContent = htmlContent;
+                existing.Time = DateTime.Now.ToString("HH:mm:ss");
             }
             else
             {
                 _responses.Add(new ResponseItem
                 {
                     Role = role,
-                    Content = content,
+                    HtmlContent = htmlContent,
                     Time = DateTime.Now.ToString("HH:mm:ss")
                 });
+            }
+
+            // 更新角标计数
+            if (!_badgeCounts.ContainsKey(role)) _badgeCounts[role] = 0;
+            _badgeCounts[role]++;
+
+            // 刷新标签栏（角标变化）
+            RefreshRoleTabs();
+            
+            await SyncToWebViewAsync();
+        }
+
+        private async void RoleTab_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string role)
+            {
+                _activeTab = role;
+                // 点击标签后清零该 role 的角标
+                if (role == "全部")
+                    _badgeCounts.Clear();
+                else
+                    _badgeCounts[role] = 0;
+
+                RefreshRoleTabs();
+                await SyncToWebViewAsync();
+            }
+        }
+
+        private void ToggleSidebarButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isSidebarExpanded = !_isSidebarExpanded;
+
+            if (_isSidebarExpanded)
+            {
+                SidebarContainer.Width = 100;
+                SidebarTitle.Visibility = Visibility.Visible;
+                ToggleSidebarButton.ToolTip = "折叠通知栏";
+            }
+            else
+            {
+                SidebarContainer.Width = 46; // 折叠宽度刚好容纳按钮和角标
+                SidebarTitle.Visibility = Visibility.Collapsed;
+                ToggleSidebarButton.ToolTip = "展开通知栏";
+            }
+
+            // 重新刷新标签栏列表使其适应大小
+            RefreshRoleTabs();
+        }
+
+        /// <summary>
+        /// 动态生成标签栏：「全部」 + 每个 role 一个标签，含未读角标和选中高亮
+        /// </summary>
+        private void RefreshRoleTabs()
+        {
+            RoleTabsPanel.Children.Clear();
+
+            // 所有节点：「全部」 + 所有出现过的 role
+            var tabs = new List<string> { "全部" };
+            tabs.AddRange(_responses.Select(r => r.Role).Distinct());
+
+            foreach (var tab in tabs)
+            {
+                bool isActive = tab == _activeTab;
+                int badge = tab == "全部" ? _badgeCounts.Values.Sum() : (_badgeCounts.TryGetValue(tab, out int v) ? v : 0);
+
+                // 是否折叠
+                string displayText = _isSidebarExpanded ? tab : (tab.Length > 0 ? tab.Substring(0, 1) : " ");
+
+                // 外层容器（指示器 + 角标布局），底部留边距
+                var container = new Grid { Margin = new Thickness(0, 0, 0, _isSidebarExpanded ? 6 : 8) };
+
+                // 主标签按钮
+                var btn = new Button
+                {
+                    Content = displayText,
+                    Padding = _isSidebarExpanded ? new Thickness(10, 4, 10, 4) : new Thickness(0, 6, 0, 6),
+                    FontSize = _isSidebarExpanded ? 12 : 14,
+                    FontWeight = isActive ? FontWeights.SemiBold : FontWeights.Normal,
+                    Foreground = isActive ? new SolidColorBrush(Color.FromRgb(2, 132, 199)) :  new SolidColorBrush(Color.FromRgb(107, 114, 128)),
+                    Background = isActive ? new SolidColorBrush(Color.FromRgb(240, 247, 255)) : Brushes.Transparent,
+                    BorderBrush = isActive ? new SolidColorBrush(Color.FromRgb(186, 224, 255)) : new SolidColorBrush(Color.FromRgb(229, 229, 231)),
+                    BorderThickness = new Thickness(1),
+                    Cursor = Cursors.Hand,
+                    ToolTip = !_isSidebarExpanded ? tab : null, // 折叠时显示完整名字 tip
+                    Tag = tab
+                };
+                btn.Resources.Add(typeof(Border), new Style(typeof(Border)) { Setters = { new Setter(Border.CornerRadiusProperty, new CornerRadius(_isSidebarExpanded ? 14 : 6)) } });
+                btn.Click += RoleTab_Click;
+                container.Children.Add(btn);
+
+                // 角标（消息数 > 0 时显示）
+                if (badge > 0)
+                {
+                    var badgeEl = new Border
+                    {
+                        Background = new SolidColorBrush(Color.FromRgb(239, 68, 68)),
+                        CornerRadius = new CornerRadius(8),
+                        MinWidth = 16,
+                        Height = 16,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Margin = _isSidebarExpanded ? new Thickness(0, -4, -4, 0) : new Thickness(0, -6, -4, 0),
+                        Padding = new Thickness(3, 0, 3, 0),
+                        IsHitTestVisible = false
+                    };
+                    badgeEl.Child = new TextBlock
+                    {
+                        Text = badge > 99 ? "99+" : badge.ToString(),
+                        Foreground = Brushes.White,
+                        FontSize = 9,
+                        FontWeight = FontWeights.Bold,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    };
+                    container.Children.Add(badgeEl);
+                }
+
+                RoleTabsPanel.Children.Add(container);
+            }
+        }
+
+
+
+        private string FixMarkdownTableFormat(string markdown)
+        {
+            if (string.IsNullOrEmpty(markdown)) return markdown;
+            var lines = markdown.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).ToList();
+            
+            // 第一遍寻找并剥离出头尾粘连的文字
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i].Trim();
+                
+                // 剥离前面粘连的文字: "干扰文字|A|B|"
+                if (line.Contains("|") && !line.StartsWith("|"))
+                {
+                    int firstPipe = line.IndexOf('|');
+                    if (firstPipe > 0 && line.Count(c => c == '|') >= 2)
+                    {
+                        string preText = line.Substring(0, firstPipe).Trim();
+                        string restText = line.Substring(firstPipe).Trim();
+                        if (!string.IsNullOrEmpty(preText))
+                        {
+                            lines[i] = preText;
+                            lines.Insert(i + 1, restText);
+                            continue; // 刚折开的一行，让下个循环继续检视
+                        }
+                    }
+                }
+
+                // 剥离后面粘连的文字: "|A|B|干扰文字"
+                if (line.StartsWith("|") && !line.EndsWith("|") && line.Count(c => c == '|') >= 2)
+                {
+                    int lastPipe = line.LastIndexOf('|');
+                    if (lastPipe < line.Length - 1 && lastPipe > 0)
+                    {
+                        string validTablePart = line.Substring(0, lastPipe + 1).Trim();
+                        string dirtyTailPart = line.Substring(lastPipe + 1).Trim();
+                        if (!string.IsNullOrEmpty(dirtyTailPart))
+                        {
+                            lines[i] = validTablePart;
+                            lines.Insert(i + 1, dirtyTailPart);
+                            line = validTablePart;
+                        }
+                    }
+                }
+            }
+
+            // 第二遍遍历：在干净的 |...| 行上方/下方强制塞入空行和表头分割带
+            bool inTable = false;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i].Trim();
+                if (line.StartsWith("|") && line.EndsWith("|") && line.Length > 1)
+                {
+                    if (!inTable)
+                    {
+                        inTable = true;
+                        // 1. 强制在表格上方补充空行 (CommonMark 铁律要求)
+                        if (i > 0 && !string.IsNullOrWhiteSpace(lines[i - 1]))
+                        {
+                            lines.Insert(i, "");
+                            i++; 
+                        }
+
+                        // 2. 检查表头下方是否缺少分割线
+                        if (i + 1 < lines.Count)
+                        {
+                            var nextLine = lines[i + 1].Trim();
+                            if (!nextLine.StartsWith("|") || (!nextLine.Contains("-") && !nextLine.Contains(":")))
+                            {
+                                int colCount = line.Count(c => c == '|') - 1;
+                                if (colCount > 0)
+                                {
+                                    string separator = "|" + string.Join("|", Enumerable.Repeat("---", colCount)) + "|";
+                                    lines.Insert(i + 1, separator);
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // 出了表格范围了，如果有表格没封闭（比如没空行），补空行打断
+                    if (inTable && !string.IsNullOrWhiteSpace(line))
+                    {
+                        inTable = false;
+                        lines.Insert(i, "");
+                        i++;
+                    }
+                    else if (string.IsNullOrWhiteSpace(line))
+                    {
+                        inTable = false;
+                    }
+                }
+            }
+            return string.Join("\n", lines);
+        }
+
+        private async Task SyncToWebViewAsync()
+        {
+            if (ResponseBoardWebView.CoreWebView2 != null)
+            {
+                // 按当前选中标签过滤显示内容
+                var toShow = _activeTab == "全部"
+                    ? _responses.ToList()
+                    : _responses.Where(r => r.Role == _activeTab).ToList();
+
+                var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                string json = JsonSerializer.Serialize(toShow, options);
+                string encodedJson = JsonSerializer.Serialize(json);
+                await ResponseBoardWebView.ExecuteScriptAsync($"renderCards({encodedJson});");
             }
         }
 
         private void ClearResponsesButton_Click(object sender, RoutedEventArgs e)
         {
             _responses.Clear();
+            _badgeCounts.Clear();
+            _activeTab = "全部";
+            RefreshRoleTabs();
+            _ = SyncToWebViewAsync();
         }
 
         private async void SendButton_Click(object sender, RoutedEventArgs e)
@@ -162,49 +486,57 @@ namespace WebViewHub.Controls
         {
             try
             {
-                // 等待页面反应，避免立刻抓取到上一条的旧回复
-                await Task.Delay(2000); 
+                // ── 阶段一：等待 AI 完成输出 ──
+                // 通过 JS 轮询各平台的"停止生成"指示器，消失则表示完成
+                // 先等 2 秒让输出开始（避免一抓就是旧内容）
+                await Task.Delay(2000);
 
-                string stableReply = string.Empty;
-                int unchangedCount = 0;
-                int maxRetries = 60; // 最多轮询监控 60 秒 (20次 * 3秒)
+                // JS 脚本：检查页面上是否还有停止生成的按钮，有则 AI 还在输出
+                string waitScript = @"
+                    (function() {
+                        if (document.querySelector('[data-testid=""stop-button""], button[aria-label=""Stop generating""]'))
+                            return 'streaming';
+                        if (document.querySelector('button[aria-label=""Stop response""], .stop-button, [data-test-id=""stop-button""]'))
+                            return 'streaming';
+                        if (document.querySelector('button[data-testid=""stop_response""]'))
+                            return 'streaming';
+                        if (document.querySelector('button[aria-label=""Stop""]'))
+                            return 'streaming';
+                        if (document.querySelector('[class*=""stop""][class*=""btn""], button[class*=""stop""]'))
+                            return 'streaming';
+                        var stopEl = Array.from(document.querySelectorAll('button')).find(function(b) {
+                            return /stop|\u505c\u6b62|\u4e2d\u65ad|cancel/i.test(b.textContent + b.ariaLabel) && b.offsetHeight > 0;
+                        });
+                        return stopEl ? 'streaming' : 'done';
+                    })();
+                ";
 
-                for (int i = 0; i < maxRetries; i++)
+                // 最多等 90 秒，每 1.5 秒检查一次
+                int maxWait = 60;
+                for (int i = 0; i < maxWait; i++)
                 {
-                    string currentReply = await view.FetchLastResponseAsync();
-                    
-                    if (!string.IsNullOrEmpty(currentReply))
-                    {
-                        if (currentReply == stableReply)
-                        {
-                            unchangedCount++;
-                            // 如果连续 2 次（约 3 秒内）文本长度无变化，则判定回答已完成
-                            if (unchangedCount >= 2) break;
-                        }
-                        else
-                        {
-                            stableReply = currentReply;
-                            unchangedCount = 0; // 字数有变动，重置计数器
-                        }
-                    }
-                    
-                    await Task.Delay(1500); // 每 1.5 秒抽查一次
+                    await Task.Delay(1500);
+                    var coreWebView = view.GetCoreWebView2();
+                    if (coreWebView == null) break;
+
+                    string statusRaw = await coreWebView.ExecuteScriptAsync(waitScript);
+                    string status = statusRaw?.Trim('"') ?? "done";
+                    if (status == "done") break;
                 }
 
-                if (!string.IsNullOrEmpty(stableReply))
+                // 额外缓冲，确保 DOM 稳定
+                await Task.Delay(500);
+
+                // ── 阶段二：一次性抓取最终回复 ──
+                string finalReply = await view.FetchLastResponseAsync();
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        AddResponse(targetRole, $"✅ 收到了来自 {targetRole} 的回复：\n" + stableReply);
-                    });
-                }
-                else
-                {
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
+                    if (!string.IsNullOrEmpty(finalReply))
+                        AddResponse(targetRole, $"✅ 收到了来自 {targetRole} 的回复：\n" + finalReply);
+                    else
                         AddResponse(targetRole, $"⚠ 等待 {targetRole} 的回复超时或未获取到内容。");
-                    });
-                }
+                });
             }
             catch (Exception ex)
             {

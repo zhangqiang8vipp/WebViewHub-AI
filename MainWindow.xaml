@@ -221,10 +221,9 @@
                         Background="#f5f5f7"
                         Margin="4"/>
 
-                <!-- 调度台：居中浮动，宽 320，顶底留边，带玻璃阴影卡片感 -->
+                <!-- 调度台：自适应内容宽度，居中浮动不会遮挡网页 -->
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"
-                        Width="320"
                         Margin="0,8,0,8"
                         CornerRadius="14"
                         Background="#ffffffee"

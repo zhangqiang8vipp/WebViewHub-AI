@@ -2,26 +2,91 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:WebViewHub.Controls"
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
              Background="#ffffff">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="2*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="1*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <!-- 左侧主面板固定 340 宽 -->
+            <ColumnDefinition Width="340"/>
+            <!-- 侧边栏列设置为 Auto，让内部 Border 控制宽度从而自适应伸缩 -->
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- 顶部标题区 -->
-        <Border Grid.Row="0" BorderBrush="#e5e5e7" BorderThickness="0,0,0,1" Padding="15">
-            <StackPanel>
-                <TextBlock Text="AI 中央调度台" FontSize="16" FontWeight="SemiBold" Foreground="#1d1d1f"/>
-                <TextBlock Text="提取回复 / 分发指令 (@角色)" FontSize="12" Foreground="#86868b" Margin="0,4,0,0"/>
-            </StackPanel>
+        <!-- 右侧：垂直标签通知栏 -->
+        <Border x:Name="SidebarContainer" Grid.Column="1" Width="100" Background="#f8f8f8" BorderBrush="#e5e5e7" BorderThickness="1,0,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <Grid Margin="0,12,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- 展开折叠按钮 -->
+                    <Button x:Name="ToggleSidebarButton" Grid.Column="0" Content="☰" FontSize="14" Foreground="#1d1d1f" Background="Transparent" 
+                            BorderThickness="0" Cursor="Hand" Padding="8,4" Margin="4,0,0,0"
+                            Click="ToggleSidebarButton_Click" ToolTip="折叠/展开通知栏">
+                        <Button.Resources>
+                            <Style TargetType="{x:Type Border}">
+                                <Setter Property="CornerRadius" Value="4"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                    
+                    <!-- 标题栏字样 (只有展开时显示) -->
+                    <TextBlock x:Name="SidebarTitle" Grid.Column="1" Text="通知管理" FontSize="13" FontWeight="SemiBold" 
+                               Foreground="#1d1d1f" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="-6,0,12,0"/>
+                </Grid>
+                
+                <!-- 垂直滚动的标签列表 -->
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Margin="6,0,6,8">
+                    <StackPanel x:Name="RoleTabsPanel" Orientation="Vertical"/>
+                </ScrollViewer>
+            </Grid>
         </Border>
 
-        <!-- 上半部分：中转信息看板区域 -->
-        <Border Grid.Row="1" Background="#fdfdfd" Padding="12">
+        <!-- 左侧：调度台主内容区，宽度锁定 340px，占据主要固定空间 -->
+        <Grid Grid.Column="0" Width="340">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="2*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 顶部标题区：左为标题文字，右为清空按钮 -->
+            <Border Grid.Row="0" BorderBrush="#e5e5e7" BorderThickness="0,0,0,1" Padding="15,10,15,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 左侧标题 -->
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="AI 中央调度台" FontSize="14" FontWeight="SemiBold" Foreground="#1d1d1f"/>
+                        <TextBlock Text="提取回复 / 分发指令 (@角色)" FontSize="11" Foreground="#86868b" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <!-- 清空按钮 -->
+                    <Button Grid.Column="1" x:Name="ClearResponsesButton" Content="清空" Click="ClearResponsesButton_Click"
+                            Padding="7,3" FontSize="11" Foreground="#86868b" Background="Transparent"
+                            BorderBrush="#e5e5e7" BorderThickness="1" Cursor="Hand" VerticalAlignment="Center" Margin="6,0,0,0">
+                        <Button.Resources>
+                            <Style TargetType="{x:Type Border}">
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- 上半部分：中转信息看板区域 -->
+            <Border Grid.Row="1" Background="#fdfdfd" Padding="12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -29,65 +94,15 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- 标题行 + 清空按钮 -->
-                <Grid Grid.Row="0" Margin="0,0,0,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="各 AI 最新回复" FontSize="12" FontWeight="SemiBold" Foreground="#86868b" VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" x:Name="ClearResponsesButton" Content="清空" Click="ClearResponsesButton_Click"
-                            Padding="8,3" FontSize="11" Foreground="#86868b" Background="Transparent"
-                            BorderBrush="#e5e5e7" BorderThickness="1" Cursor="Hand">
-                        <Button.Resources>
-                            <Style TargetType="{x:Type Border}">
-                                <Setter Property="CornerRadius" Value="4"/>
-                            </Style>
-                        </Button.Resources>
-                    </Button>
-                </Grid>
+                <!-- WebView 上方不再需要额外标签栏（已移入标题区右侧）-->
 
-                <!-- 多卡片回复展示区 -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl x:Name="ResponseBoard">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Margin="0,0,0,8" CornerRadius="8"
-                                        Background="#ffffff"
-                                        BorderBrush="#e5e5e7" BorderThickness="1">
-                                    <Border.Effect>
-                                        <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="6" ShadowDepth="1"/>
-                                    </Border.Effect>
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <!-- 角色标签栏 -->
-                                        <Border Grid.Row="0" Background="#f0f7ff" CornerRadius="8,8,0,0" Padding="10,6">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="●" Foreground="#0284c7" FontSize="9" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <TextBlock Text="{Binding Role}" FontSize="12" FontWeight="SemiBold" Foreground="#0284c7" VerticalAlignment="Center"/>
-                                                <TextBlock Text="{Binding Time}" FontSize="10" Foreground="#94a3b8" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                            </StackPanel>
-                                        </Border>
-                                        <!-- 回复内容 -->
-                                        <TextBox Grid.Row="1"
-                                                 Text="{Binding Content, Mode=OneWay}"
-                                                 TextWrapping="Wrap"
-                                                 IsReadOnly="True"
-                                                 BorderThickness="0"
-                                                 Background="Transparent"
-                                                 FontSize="13"
-                                                 Foreground="#1c1c1c"
-                                                 Padding="10,8"
-                                                 VerticalScrollBarVisibility="Disabled"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <!-- 多卡片回复展示区 (纯原生 Edge WebView 渲染内核) -->
+                <Border Grid.Row="1" CornerRadius="8" BorderBrush="#e5e5e7" BorderThickness="1" Background="#ffffff" Margin="0,0,0,8" ClipToBounds="True">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="6" ShadowDepth="1"/>
+                    </Border.Effect>
+                    <wv2:WebView2 x:Name="ResponseBoardWebView" DefaultBackgroundColor="White" Margin="0"/>
+                </Border>
 
                 <!-- 抓取按钮 -->
                 <Button Grid.Row="2" x:Name="FetchButton" Content="⬇ 抓取所有 AI 的最新回答"
@@ -190,5 +205,6 @@
             </Grid>
         </Border>
 
+        </Grid>
     </Grid>
 </UserControl>

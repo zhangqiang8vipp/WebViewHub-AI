@@ -1,0 +1,9 @@
+E:\ProjectMy\WebViewHub\Controls\WebViewContainer.xaml.cs(72,21): error CS1061: “WebViewUnit”未包含“CoreWebView2InitializationCompleted”的定义，并且找不到可接受第一个“WebViewUnit”类型参数的可访问扩展方法“CoreWebView2InitializationCompleted”(是否缺少 using 指令或程序集引用?) [E:\ProjectMy\WebViewHub\WebViewHub_sif2qlui_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\Controls\WebViewContainer.xaml.cs(77,40): error CS1061: “WebViewUnit”未包含“CoreWebView2”的定义，并且找不到可接受第一个“WebViewUnit”类型参数的可访问扩展方法“CoreWebView2”(是否缺少 using 指令或程序集引用?) [E:\ProjectMy\WebViewHub\WebViewHub_sif2qlui_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\Controls\WebViewContainer.xaml.cs(80,25): error CS1061: “WebViewUnit”未包含“CoreWebView2”的定义，并且找不到可接受第一个“WebViewUnit”类型参数的可访问扩展方法“CoreWebView2”(是否缺少 using 指令或程序集引用?) [E:\ProjectMy\WebViewHub\WebViewHub_sif2qlui_wpftmp.csproj]
+
+生成失败。
+    1 个警告
+    3 个错误
+
+已用时间 00:00:01.31
