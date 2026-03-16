@@ -1,0 +1,19 @@
+﻿  姝ｅ湪纭畾瑕佽繕鍘熺殑椤圭洰鈥?
+  鎵€鏈夐」鐩潎鏄渶鏂扮殑锛屾棤娉曡繕鍘熴€?
+E:\ProjectMy\WebViewHub\FloatingIslandWindow.xaml.cs(87,16): warning CS8618: 鍦ㄩ€€鍑烘瀯閫犲嚱鏁版椂锛屼笉鍙负 null 鐨?灞炴€?"MainWindowReference" 蹇呴』鍖呭惈闈?null 鍊笺€傝鑰冭檻娣诲姞 "required" 淇グ绗︽垨灏嗚 灞炴€?澹版槑涓哄彲涓?null銆?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\FloatingIslandWindow.xaml.cs(150,47): warning CS8604: 鈥淒irectoryInfo Directory.CreateDirectory(string path)鈥濅腑鐨勫舰鍙傗€減ath鈥濆彲鑳戒紶鍏?null 寮曠敤瀹炲弬銆?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\Services\AppLogger.cs(198,34): warning CS8600: 灏?null 鏂囨湰鎴栧彲鑳界殑 null 鍊艰浆鎹负涓嶅彲涓?null 绫诲瀷銆?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\Controls\CentralCommandPanel.xaml.cs(47,16): warning CS8618: 鍦ㄩ€€鍑烘瀯閫犲嚱鏁版椂锛屼笉鍙负 null 鐨?灞炴€?"MainWindowReference" 蹇呴』鍖呭惈闈?null 鍊笺€傝鑰冭檻娣诲姞 "required" 淇グ绗︽垨灏嗚 灞炴€?澹版槑涓哄彲涓?null銆?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\FloatingIslandWindow.xaml.cs(597,13): error CS0103: 褰撳墠涓婁笅鏂囦腑涓嶅瓨鍦ㄥ悕绉扳€淿hoverTimer鈥?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+
+鐢熸垚澶辫触銆?
+
+E:\ProjectMy\WebViewHub\FloatingIslandWindow.xaml.cs(87,16): warning CS8618: 鍦ㄩ€€鍑烘瀯閫犲嚱鏁版椂锛屼笉鍙负 null 鐨?灞炴€?"MainWindowReference" 蹇呴』鍖呭惈闈?null 鍊笺€傝鑰冭檻娣诲姞 "required" 淇グ绗︽垨灏嗚 灞炴€?澹版槑涓哄彲涓?null銆?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\FloatingIslandWindow.xaml.cs(150,47): warning CS8604: 鈥淒irectoryInfo Directory.CreateDirectory(string path)鈥濅腑鐨勫舰鍙傗€減ath鈥濆彲鑳戒紶鍏?null 寮曠敤瀹炲弬銆?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\Services\AppLogger.cs(198,34): warning CS8600: 灏?null 鏂囨湰鎴栧彲鑳界殑 null 鍊艰浆鎹负涓嶅彲涓?null 绫诲瀷銆?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\Controls\CentralCommandPanel.xaml.cs(47,16): warning CS8618: 鍦ㄩ€€鍑烘瀯閫犲嚱鏁版椂锛屼笉鍙负 null 鐨?灞炴€?"MainWindowReference" 蹇呴』鍖呭惈闈?null 鍊笺€傝鑰冭檻娣诲姞 "required" 淇グ绗︽垨灏嗚 灞炴€?澹版槑涓哄彲涓?null銆?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+E:\ProjectMy\WebViewHub\FloatingIslandWindow.xaml.cs(597,13): error CS0103: 褰撳墠涓婁笅鏂囦腑涓嶅瓨鍦ㄥ悕绉扳€淿hoverTimer鈥?[E:\ProjectMy\WebViewHub\WebViewHub_czqcyxzy_wpftmp.csproj]
+    4 涓鍛?
+    1 涓敊璇?
+
+宸茬敤鏃堕棿 00:00:01.26

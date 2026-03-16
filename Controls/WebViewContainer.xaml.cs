@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Web.WebView2.Core;
 
 namespace WebViewHub.Controls
 {
@@ -54,6 +55,19 @@ namespace WebViewHub.Controls
             set => WebView.CurrentUrl = value;
         }
 
+        public static readonly DependencyProperty ZoomFactorProperty =
+            DependencyProperty.Register(
+                nameof(ZoomFactor),
+                typeof(double),
+                typeof(WebViewContainer),
+                new PropertyMetadata(1.0, OnZoomFactorChanged));
+
+        public double ZoomFactor
+        {
+            get => (double)GetValue(ZoomFactorProperty);
+            set => SetValue(ZoomFactorProperty, value);
+        }
+
         #endregion
 
         #region 事件
@@ -68,23 +82,50 @@ namespace WebViewHub.Controls
         {
             InitializeComponent();
             SizeChanged += WebViewContainer_SizeChanged;
+            WebView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
+        }
+
+        private void WebView_CoreWebView2InitializationCompleted(object? sender, EventArgs e)
+        {
+            var coreWebView = WebView.GetCoreWebView2();
+            if (coreWebView != null)
+            {
+                ApplyMobileModeUI();
+                coreWebView.Settings.UserAgent = _isMobileMode ? MobileUserAgent : DesktopUserAgent;
+            }
         }
 
         private void WebViewContainer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            // 当容器大小变化时计算缩放比例并应用
-            // 以 1000 作为基准宽度，低于这个宽度就按比例缩小
+            ApplyZoom();
+        }
+
+        private void ApplyZoom()
+        {
+            // 当容器大小变化或初始加载时计算缩放比例并应用
+            // 以 1000 作为基准宽度，低于这个宽度就按比例缩小（自动缩放部分）
             double baseWidth = 1000.0;
-            double currentWidth = e.NewSize.Width;
-            
-            double zoomFactor = Math.Min(1.0, currentWidth / baseWidth);
-            // 限制最小缩放比例为 30% 防止看不清
-            zoomFactor = Math.Max(0.3, zoomFactor);
+            double currentWidth = ActualWidth;
+            if (currentWidth <= 0) return;
+
+            double autoZoom = Math.Min(1.0, currentWidth / baseWidth);
+            autoZoom = Math.Max(0.3, autoZoom);
+
+            // 最终缩放比例 = 自动缩放因子 * 用户手动持久化的缩放因子
+            double finalZoom = autoZoom * ZoomFactor;
 
             var coreWebView = WebView.GetCoreWebView2();
             if (coreWebView != null)
             {
-                WebView.SetZoomFactor(zoomFactor);
+                WebView.SetZoomFactor(finalZoom);
+            }
+        }
+
+        private static void OnZoomFactorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is WebViewContainer container)
+            {
+                container.ApplyZoom();
             }
         }
 
@@ -170,6 +211,18 @@ namespace WebViewHub.Controls
         }
 
         private bool _isMobileMode = false;
+        public bool IsMobileModeContent
+        {
+            get => _isMobileMode;
+            set
+            {
+                if (_isMobileMode != value)
+                {
+                    _isMobileMode = value;
+                    ApplyMobileModeUI();
+                }
+            }
+        }
 
         // 手机版 UA（iPhone Safari）
         private const string MobileUserAgent =
@@ -181,21 +234,26 @@ namespace WebViewHub.Controls
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
 
+        private void ApplyMobileModeUI()
+        {
+            ToggleMobileButton.ToolTip = _isMobileMode ? "当前：手机版（点击切换桌面版）" : "切换手机版/桌面版";
+            ToggleMobileButton.Background = _isMobileMode
+                ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 122, 255))
+                : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(191, 191, 191));
+        }
+
         private async void ToggleMobile_Click(object sender, RoutedEventArgs e)
         {
             var coreWebView = WebView.GetCoreWebView2();
             if (coreWebView == null) return;
 
-            _isMobileMode = !_isMobileMode;
+            IsMobileModeContent = !_isMobileMode;
 
             // 切换 User-Agent
             coreWebView.Settings.UserAgent = _isMobileMode ? MobileUserAgent : DesktopUserAgent;
 
-            // 更新按钮提示和颜色
-            ToggleMobileButton.ToolTip = _isMobileMode ? "当前：手机版（点击切换桌面版）" : "切换手机版/桌面版";
-            ToggleMobileButton.Background = _isMobileMode
-                ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 122, 255))
-                : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(191, 191, 191));
+            // 存入配置文件
+            (Window.GetWindow(this) as MainWindow)?.SaveLayout();
 
             // 刷新页面以应用新 UA
             await coreWebView.ExecuteScriptAsync("location.reload();");
@@ -276,162 +334,108 @@ namespace WebViewHub.Controls
             await Task.Delay(300);
 
             // 4. 第四步：CDP 模拟完美的实体 Enter 回车键按下与抬起
-            string keyDownJson = "{\"type\": \"keyDown\", \"windowsVirtualKeyCode\": 13, \"key\": \"Enter\", \"code\": \"Enter\", \"text\": \"\\r\"}";
-            string keyUpJson = "{\"type\": \"keyUp\", \"windowsVirtualKeyCode\": 13, \"key\": \"Enter\", \"code\": \"Enter\"}";
+            // 检测是否需要 Ctrl+Enter 组合键 (Grok 与 Gemini 等新版本网页特性强制要求)
+            bool requiresCtrl = false;
+            try
+            {
+                // 使用 coreWebView.Source (string) 并解析为其 Host
+                var uri = new Uri(coreWebView.Source);
+                string host = uri.Host.ToLower();
+                if (host.Contains("grok") || host.Contains("x.com") || host.Contains("gemini"))
+                {
+                    requiresCtrl = true;
+                }
+            }
+            catch { }
+
+            string modifierJson = requiresCtrl ? ", \"modifiers\": 2" : "";
+            
+            string keyDownJson = $"{{\"type\": \"keyDown\", \"windowsVirtualKeyCode\": 13, \"key\": \"Enter\", \"code\": \"Enter\", \"text\": \"\\r\"{modifierJson}}}";
+            string keyUpJson = $"{{\"type\": \"keyUp\", \"windowsVirtualKeyCode\": 13, \"key\": \"Enter\", \"code\": \"Enter\"{modifierJson}}}";
             
             await coreWebView.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent", keyDownJson);
             await Task.Delay(50);
             await coreWebView.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent", keyUpJson);
         }
 
+        /// <summary>供外部（如 CentralCommandPanel）获取 CoreWebView2 实例，用于执行监控脚本。</summary>
+        public Microsoft.Web.WebView2.Core.CoreWebView2? GetCoreWebView2() => WebView.GetCoreWebView2();
+
+        // 抓取限流器：防止并发触发抓取造成剪贴板竞态
+        private static readonly System.Threading.SemaphoreSlim _fetchLock = new System.Threading.SemaphoreSlim(1, 1);
+
         /// <summary>
-        /// 抓取该网页内最后一条 AI 回答气泡的文本内容。
-        /// 策略：先聚焦 WebView → JS 用 Selection+execCommand('copy') 将最后回复内容推入剪贴板 → C# 读剪贴板
-        /// 完全绕过 clipboard API 权限问题，无需用户手势。
+        /// 基于 Turndown DOM 抓取方案获取最后一条回复的 Markdown 原文。
+        /// 通过注入 TurndownService.js 与本地的高级多平台适配器，不仅省却了操作虚拟鼠标与系统剪贴板的复杂步骤，
+        /// 更通过 HTML 逆向实现了对代码块、富文本高保真解析，彻底摆脱跨模型的不同格式截断问题。
         /// </summary>
         public async Task<string> FetchLastResponseAsync()
         {
             var coreWebView = WebView.GetCoreWebView2();
             if (coreWebView == null) return string.Empty;
 
-            // 步骤 1：先聚焦 WebView 控件（以获得 Document Focus，execCommand 需要）
-            await Application.Current.Dispatcher.InvokeAsync(() => WebView.Focus());
-            await Task.Delay(100);
-
-            // 步骤 2：保存当前剪贴板内容（用于之后对比）
-            string oldClipboard = string.Empty;
-            await Application.Current.Dispatcher.InvokeAsync(() =>
+            await _fetchLock.WaitAsync();
+            try
             {
-                try { oldClipboard = Clipboard.GetText(); } catch { }
-            });
+                // 1. 读取随应用程序分发的两份 JS 资源核心框架
+                string turndownPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "turndown.js");
+                string extractorPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "extractor.js");
 
-            // 步骤 3：JS 找最后一条 AI 回复元素，用 Selection 选中并 execCommand('copy')
-            string script = @"
-                (function() {
-                    let el = null;
+                if (!System.IO.File.Exists(turndownPath) || !System.IO.File.Exists(extractorPath))
+                {
+                    return "❌ 本地核心解析 JS 资源文件丢失。";
+                }
 
-                    // 豆包
-                    let doubaoMsgs = document.querySelectorAll('[data-testid=""receive_message""]');
-                    if (doubaoMsgs.length > 0) el = doubaoMsgs[doubaoMsgs.length - 1];
+                string turndownJs = await System.IO.File.ReadAllTextAsync(turndownPath);
+                string extractorJs = await System.IO.File.ReadAllTextAsync(extractorPath);
 
-                    // ChatGPT
-                    if (!el) {
-                        let gptMsgs = document.querySelectorAll('[data-message-author-role=""assistant""]');
-                        if (gptMsgs.length > 0) el = gptMsgs[gptMsgs.length - 1];
-                    }
+                // 2. 将框架层无损注入至当前 WebView 当前作用域中；先探测是否已有 TurndownService，若无则运行
+                string checkScript = "typeof window.TurndownService !== 'undefined'";
+                var hasTurndown = await coreWebView.ExecuteScriptAsync(checkScript);
+                
+                if (hasTurndown != "true")
+                {
+                    // 必须抛弃外层大括号，使得 var TurndownService 暴露至 Global
+                    await coreWebView.ExecuteScriptAsync(turndownJs + ";\nwindow.TurndownService = TurndownService;");
+                }
 
-                    // Gemini
-                    if (!el) {
-                        let gemMsgs = document.querySelectorAll('model-response');
-                        if (gemMsgs.length > 0) {
-                            let lastMsgArea = gemMsgs[gemMsgs.length - 1];
-                            el = lastMsgArea.querySelector('.message-content, .markdown, .response-container-content, [data-test-id=""message-content""]') || lastMsgArea;
-                        }
-                    }
-                    if (!el) {
-                        let gemMsgs2 = document.querySelectorAll('.response-container-markdown');
-                        if (gemMsgs2.length > 0) el = gemMsgs2[gemMsgs2.length - 1];
-                    }
+                // 3. 聚焦网页（某些懒加载策略可能基于 visibility），并调用提取器拉起多平台兼容的 DOM 到 MD 的渲染过程
+                await Application.Current.Dispatcher.InvokeAsync(() => WebView.Focus());
+                await Task.Delay(150);
 
-                    // Grok（xAI）：回复块常见特征
-                    if (!el) {
-                        let grokMsgs = document.querySelectorAll(
-                            '.message-bubble, [class*=""AssistantMessage""], [class*=""assistant-message""], ' +
-                            '[class*=""BotMessage""], [class*=""ai-message""]'
-                        );
-                        if (grokMsgs.length > 0) el = grokMsgs[grokMsgs.length - 1];
-                    }
+                var jsonRaw = await coreWebView.ExecuteScriptAsync(extractorJs);
 
-                    // 通用 markdown / prose
-                    if (!el) {
-                        let mdMsgs = document.querySelectorAll('.markdown, div.prose, [class*=""markdown""]');
-                        if (mdMsgs.length > 0) el = mdMsgs[mdMsgs.length - 1];
-                    }
+                if (string.IsNullOrEmpty(jsonRaw) || jsonRaw == "null" || jsonRaw == "\"\"")
+                    return string.Empty;
 
-                    // 终极兜底：找页面上文字最多的非输入框 div（通用扫描器）
-                    if (!el) {
-                        let candidates = Array.from(document.querySelectorAll('div, article, section'));
-                        // 排除输入框和导航
-                        candidates = candidates.filter(d => {
-                            if (d.querySelector('textarea, input')) return false;
-                            if (d.tagName === 'NAV' || d.role === 'navigation') return false;
-                            let txt = d.innerText || '';
-                            return txt.trim().length > 100;
-                        });
-                        if (candidates.length > 0) {
-                            // 找最后一个文字量适中（50-3000字）的候选块
-                            for (let i = candidates.length - 1; i >= 0; i--) {
-                                let len = (candidates[i].innerText || '').trim().length;
-                                if (len > 50 && len < 3000) { el = candidates[i]; break; }
-                            }
-                        }
-                    }
+                // 4. 对返回值解包转出到 C# 原生 String 并返回
+                string markdown;
+                try 
+                { 
+                    markdown = System.Text.Json.JsonSerializer.Deserialize<string>(jsonRaw) ?? ""; 
+                }
+                catch 
+                { 
+                    markdown = jsonRaw.Trim('"'); 
+                }
 
-                    if (!el) return 'not_found';
+                // 解除转义换行符并检测错误标志
+                markdown = markdown.Replace("\\n", "\n").Replace("\\r", "\r");
+                if (markdown.StartsWith("Error:"))
+                {
+                    return "❌ " + markdown.Trim();
+                }
 
-                    // 用 Selection + execCommand('copy') 把内容写入系统剪贴板
-                    try {
-                        const range = document.createRange();
-                        range.selectNodeContents(el);
-                        const sel = window.getSelection();
-                        sel.removeAllRanges();
-                        sel.addRange(range);
-                        document.execCommand('copy');
-                        sel.removeAllRanges();
-                        return 'ok:' + el.tagName;
-                    } catch (e) {
-                        return 'error:' + e.message;
-                    }
-                })();
-            ";
-
-            await coreWebView.ExecuteScriptAsync(script);
-
-            // 步骤 4：等复制完成，然后从 C# 读剪贴板
-            await Task.Delay(400);
-
-            string result = string.Empty;
-            await Application.Current.Dispatcher.InvokeAsync(() =>
-            {
-                try { result = Clipboard.GetText(); } catch { }
-            });
-
-            if (!string.IsNullOrWhiteSpace(result) && result != oldClipboard)
-                return result.Trim();
-
-            // 步骤 5：兜底 —— 直接读 DOM innerText
-            string fallbackScript = @"
-                (function() {
-                    let doubaoAll = document.querySelectorAll('[data-testid=""receive_message""]');
-                    if (doubaoAll.length > 0) return doubaoAll[doubaoAll.length - 1].innerText.trim();
-
-                    let gptMsgs = document.querySelectorAll('[data-message-author-role=""assistant""]');
-                    if (gptMsgs.length > 0) return gptMsgs[gptMsgs.length - 1].innerText.trim();
-
-                    let geminiMsgs = document.querySelectorAll('model-response');
-                    if (geminiMsgs.length > 0) {
-                        let lastArea = geminiMsgs[geminiMsgs.length - 1];
-                        let contentNodes = lastArea.querySelector('.message-content, .markdown, .response-container-content, [data-test-id=""message-content""]');
-                        return (contentNodes || lastArea).innerText.trim();
-                    }
-                    let geminiMsgs2 = document.querySelectorAll('.response-container-markdown');
-                    if (geminiMsgs2.length > 0) return geminiMsgs2[geminiMsgs2.length - 1].innerText.trim();
-
-                    let mdMsgs = document.querySelectorAll('.markdown, div.prose');
-                    if (mdMsgs.length > 0) return mdMsgs[mdMsgs.length - 1].innerText.trim();
-
-                    return '';
-                })();
-            ";
-
-            var resultRaw = await coreWebView.ExecuteScriptAsync(fallbackScript);
-            if (!string.IsNullOrEmpty(resultRaw) && resultRaw != "null")
-            {
-                try { return System.Text.Json.JsonSerializer.Deserialize<string>(resultRaw) ?? string.Empty; }
-                catch { return resultRaw.Trim('"', '\''); }
+                return markdown.Trim();
             }
-
-            return string.Empty;
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+            finally
+            {
+                _fetchLock.Release();
+            }
         }
 
         #endregion

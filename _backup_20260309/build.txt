@@ -1,0 +1,11 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+E:\ProjectMy\WebViewHub\Controls\CentralCommandPanel.xaml.cs(272,28): error CS0111: Type 'CentralCommandPanel' already defines a member called 'RoleTab_Click' with the same parameter types [E:\ProjectMy\WebViewHub\WebViewHub_zpaohn15_wpftmp.csproj]
+
+Build FAILED.
+
+E:\ProjectMy\WebViewHub\Controls\CentralCommandPanel.xaml.cs(272,28): error CS0111: Type 'CentralCommandPanel' already defines a member called 'RoleTab_Click' with the same parameter types [E:\ProjectMy\WebViewHub\WebViewHub_zpaohn15_wpftmp.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:01.09
